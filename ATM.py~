@@ -1,0 +1,61 @@
+__author__ = 'Julia'
+
+from exceptions import *
+from zope.interface import *
+from functools import wraps
+
+class Account(Interface):
+    def get_balance(self):
+        "_"
+
+    def withdraw(self,amount):
+        "_"
+
+class Card(Interface):
+    def is_blocked (self):
+        "_"
+
+    def get_account(self):
+        "_"
+
+    def check_pin (self,pin):
+        "_"
+
+def ascertain_card(func):
+    @wraps(func)
+    def wrapped(self, *args):
+        if not self.card:
+            raise NoCardInserted
+        return func(self, *args)
+
+    return wrapped
+
+class ATM:
+    def __init__(self,cash=0):
+        self.money_balance = cash
+        self.card = None
+
+    def validate_card(self,card,pin):
+        if card.is_blocked() or not card.check_pin():
+            return False
+        self.card = card
+
+    @ascertain_card
+    def card_balance(self):
+        return self.card.get_account().get_balance()
+
+    @ascertain_card
+    def get_money(self,amount):
+        if amount > self.card_balance() :
+            raise NotEnoughMoneyInAccount
+        if amount > self.money_balance:
+            raise NotEnoughMoneyInATM
+
+        withdrawn = self.card.get_account().withdraw(amount)
+        self.money_balance -= withdrawn
+        return self.card_balance - withdrawn
+
+
+
+
+
